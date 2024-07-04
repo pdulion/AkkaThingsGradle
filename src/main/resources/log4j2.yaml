@@ -1,0 +1,15 @@
+Configuration:
+  Appenders:
+    Console:
+      Name: STDOUT
+      Target: SYSTEM_OUT
+      PatternLayout:
+        Pattern: "%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"
+  Loggers:
+    Logger:
+    - Name: com.dulion.akka
+      Level: info
+    Root:
+      Level: warn
+      AppenderRef:
+        ref: STDOUT
