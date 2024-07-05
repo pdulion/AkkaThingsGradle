@@ -4,14 +4,13 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import com.dulion.akka.iot.Device.RecordTemperature;
-import com.dulion.akka.iot.Device.TemperatureRecorded;
-import com.dulion.akka.iot.Device.TemperatureReply;
 import com.dulion.akka.iot.Device.Request;
 import com.dulion.akka.iot.Device.RequestTemperature;
-import java.util.Optional;
-import static org.junit.jupiter.api.Assertions.*;
+import com.dulion.akka.iot.Device.TemperatureRecorded;
+import com.dulion.akka.iot.Device.TemperatureReply;
 import org.junit.ClassRule;
 import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DeviceTest {
 
@@ -25,7 +24,7 @@ public class DeviceTest {
     deviceActor.tell(RequestTemperature.builder().requestId(42L).replyTo(readProbe.getRef()).build());
     TemperatureReply reply = readProbe.receiveMessage();
     assertEquals(42L, reply.getRequestId());
-    assertEquals(Optional.empty(), reply.getTemperature());
+    assertNull(reply.getTemperature());
   }
 
   @Test
@@ -49,6 +48,6 @@ public class DeviceTest {
             .build());
     TemperatureReply temperature = readProbe.receiveMessage();
     assertEquals(2L, temperature.getRequestId());
-    assertEquals(Optional.of(24.0), temperature.getTemperature());
+    assertEquals(24.0, temperature.getTemperature());
   }
 }

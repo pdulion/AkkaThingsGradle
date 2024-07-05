@@ -8,7 +8,6 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import com.dulion.akka.iot.Device.Request;
-import java.util.Optional;
 import lombok.Builder;
 import lombok.Value;
 
@@ -31,7 +30,7 @@ public class Device extends AbstractBehavior<Request> {
   public static class TemperatureReply {
 
     long requestId;
-    Optional<Double> temperature;
+    Double temperature;
   }
 
   @Value
@@ -63,7 +62,7 @@ public class Device extends AbstractBehavior<Request> {
 
   private final String groupId;
   private final String deviceId;
-  private Optional<Double> temperature = Optional.empty();
+  private Double temperature = null;
 
   public Device(ActorContext<Request> context, String groupId, String deviceId) {
     super(context);
@@ -89,7 +88,7 @@ public class Device extends AbstractBehavior<Request> {
         groupId,
         deviceId,
         System.identityHashCode(this));
-    temperature = Optional.of(request.getTemperature());
+    temperature = request.getTemperature();
     request.replyTo.tell(
         TemperatureRecorded.builder()
             .requestId(request.getRequestId())
@@ -101,7 +100,7 @@ public class Device extends AbstractBehavior<Request> {
     getContext().getLog().info(
         "Temperature requested id: {}, temperatures {},  actor: {}-{}: {}",
         request.getRequestId(),
-        temperature.toString(),
+        temperature,
         groupId,
         deviceId,
         System.identityHashCode(this));
