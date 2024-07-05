@@ -28,7 +28,9 @@ dependencies {
   runtimeOnly "org.apache.logging.log4j:log4j-slf4j-impl:2.23.1"
 
   testImplementation "com.typesafe.akka:akka-actor-testkit-typed_${versions.ScalaBinary}"
-  testImplementation "junit:junit:4.13.2"
+//  testImplementation "junit:junit:4.13.2"
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.3'
+  testImplementation 'org.junit.vintage:junit-vintage-engine:5.10.3'
 }
 
 test {

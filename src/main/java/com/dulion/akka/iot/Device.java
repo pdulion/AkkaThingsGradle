@@ -1,4 +1,4 @@
-package com.dulion.akka;
+package com.dulion.akka.iot;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
@@ -7,7 +7,7 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import com.dulion.akka.Device.Request;
+import com.dulion.akka.iot.Device.Request;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.Value;
@@ -69,7 +69,7 @@ public class Device extends AbstractBehavior<Request> {
     super(context);
     this.groupId = groupId;
     this.deviceId = deviceId;
-    context.getLog().info("Device actor {}-{} started", groupId, deviceId);
+    context.getLog().info("Device actor {}-{}: {} created", groupId, deviceId, System.identityHashCode(this));
   }
 
   @Override
@@ -83,11 +83,12 @@ public class Device extends AbstractBehavior<Request> {
 
   private Behavior<Request> onRecordTemperature(RecordTemperature request) {
     getContext().getLog().info(
-        "Temperature recording id: {}, temperatures {},  actor: {}-{} ",
+        "Temperature recording id: {}, temperatures {},  actor: {}-{}: {} ",
         request.getRequestId(),
         request.getTemperature(),
         groupId,
-        deviceId);
+        deviceId,
+        System.identityHashCode(this));
     temperature = Optional.of(request.getTemperature());
     request.replyTo.tell(
         TemperatureRecorded.builder()
@@ -98,11 +99,12 @@ public class Device extends AbstractBehavior<Request> {
 
   private Behavior<Request> onReadTemperature(RequestTemperature request) {
     getContext().getLog().info(
-        "Temperature requested id: {}, temperatures {},  actor: {}-{} ",
+        "Temperature requested id: {}, temperatures {},  actor: {}-{}: {}",
         request.getRequestId(),
         temperature.toString(),
         groupId,
-        deviceId);
+        deviceId,
+        System.identityHashCode(this));
     request.getReplyTo().tell(
         TemperatureReply.builder()
             .requestId(request.getRequestId())
@@ -112,7 +114,11 @@ public class Device extends AbstractBehavior<Request> {
   }
 
   private Behavior<Request> onPostStop(PostStop signal) {
-    getContext().getLog().info("Device actor {}-{} stopped", groupId, deviceId);
+    getContext().getLog().info(
+        "Device actor {}-{}: {} stopped",
+        groupId,
+        deviceId,
+        System.identityHashCode(this));
     return this;
   }
 }

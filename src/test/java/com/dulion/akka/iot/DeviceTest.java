@@ -1,15 +1,15 @@
-package com.dulion.akka;
+package com.dulion.akka.iot;
 
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
-import com.dulion.akka.Device.RecordTemperature;
-import com.dulion.akka.Device.TemperatureRecorded;
-import com.dulion.akka.Device.TemperatureReply;
-import com.dulion.akka.Device.Request;
-import com.dulion.akka.Device.RequestTemperature;
+import com.dulion.akka.iot.Device.RecordTemperature;
+import com.dulion.akka.iot.Device.TemperatureRecorded;
+import com.dulion.akka.iot.Device.TemperatureReply;
+import com.dulion.akka.iot.Device.Request;
+import com.dulion.akka.iot.Device.RequestTemperature;
 import java.util.Optional;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.ClassRule;
 import org.junit.Test;
 

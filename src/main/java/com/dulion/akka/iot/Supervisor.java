@@ -1,4 +1,4 @@
-package com.dulion.akka;
+package com.dulion.akka.iot;
 
 import akka.actor.typed.Behavior;
 import akka.actor.typed.PostStop;
@@ -7,13 +7,13 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
-public class IotSupervisor extends AbstractBehavior<Void> {
+public class Supervisor extends AbstractBehavior<Void> {
 
   public static Behavior<Void> create() {
-    return Behaviors.setup(IotSupervisor::new);
+    return Behaviors.setup(Supervisor::new);
   }
 
-  private IotSupervisor(ActorContext<Void> context) {
+  private Supervisor(ActorContext<Void> context) {
     super(context);
     getContext().getLog().info("IoT Application Started");
   }
