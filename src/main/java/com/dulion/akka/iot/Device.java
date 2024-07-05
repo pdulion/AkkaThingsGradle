@@ -49,12 +49,16 @@ public class Device extends AbstractBehavior<Request> {
     long requestId;
   }
 
+  enum Passivate implements Request {
+    INSTANCE
+  }
+
   /**
-   * Create behavior for temperature Device.
+   * Create behavior for temperature device.
    *
    * @param groupId  - Group to which this device belongs.
    * @param deviceId - Identifier for device.
-   * @return Behavior - instance representing device.
+   * @return Behavior - reference to device supplier.
    */
   public static Behavior<Request> create(String groupId, String deviceId) {
     return Behaviors.setup(context -> new Device(context, groupId, deviceId));
@@ -68,7 +72,7 @@ public class Device extends AbstractBehavior<Request> {
     super(context);
     this.groupId = groupId;
     this.deviceId = deviceId;
-    context.getLog().info("Device actor {}-{}: {} created", groupId, deviceId, System.identityHashCode(this));
+    context.getLog().info("Device actor {}-{} ({}) created", groupId, deviceId, System.identityHashCode(this));
   }
 
   @Override
@@ -76,13 +80,14 @@ public class Device extends AbstractBehavior<Request> {
     return newReceiveBuilder()
         .onMessage(RecordTemperature.class, this::onRecordTemperature)
         .onMessage(RequestTemperature.class, this::onReadTemperature)
+        .onMessage(Passivate.class, signal -> Behaviors.stopped())
         .onSignal(PostStop.class, this::onPostStop)
         .build();
   }
 
   private Behavior<Request> onRecordTemperature(RecordTemperature request) {
     getContext().getLog().info(
-        "Temperature recording id: {}, temperatures {},  actor: {}-{}: {} ",
+        "Recording Temperature requestId: {}, temperatures {}, actor: {}-{} ({})",
         request.getRequestId(),
         request.getTemperature(),
         groupId,
@@ -98,7 +103,7 @@ public class Device extends AbstractBehavior<Request> {
 
   private Behavior<Request> onReadTemperature(RequestTemperature request) {
     getContext().getLog().info(
-        "Temperature requested id: {}, temperatures {},  actor: {}-{}: {}",
+        "Temperature requested requestId: {}, temperatures {}, actor: {}-{} ({})",
         request.getRequestId(),
         temperature,
         groupId,
@@ -114,7 +119,7 @@ public class Device extends AbstractBehavior<Request> {
 
   private Behavior<Request> onPostStop(PostStop signal) {
     getContext().getLog().info(
-        "Device actor {}-{}: {} stopped",
+        "Device actor {}-{} ({}) stopped",
         groupId,
         deviceId,
         System.identityHashCode(this));

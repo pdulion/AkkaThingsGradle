@@ -1,0 +1,118 @@
+package com.dulion.akka.iot;
+
+import akka.actor.typed.ActorRef;
+import akka.actor.typed.Behavior;
+import akka.actor.typed.PostStop;
+import akka.actor.typed.javadsl.AbstractBehavior;
+import akka.actor.typed.javadsl.ActorContext;
+import akka.actor.typed.javadsl.Behaviors;
+import akka.actor.typed.javadsl.Receive;
+import com.dulion.akka.iot.Manager.DeviceListReply;
+import com.dulion.akka.iot.Manager.DeviceRegistered;
+import com.dulion.akka.iot.Manager.RegisterDevice;
+import com.dulion.akka.iot.Manager.RequestDeviceList;
+import java.util.HashMap;
+import java.util.Map;
+import lombok.Builder;
+import lombok.Value;
+
+public class Group extends AbstractBehavior<Group.Request> {
+
+  public interface Request {
+
+  }
+
+  @Value
+  @Builder
+  private static class DeviceTerminated implements Request {
+
+    String groupId;
+    String deviceId;
+  }
+
+  /**
+   * Create behavior for temperature device manager.
+   *
+   * @param groupId - Identifies group to which devices will belong.
+   * @return Behavior - reference to group supplier.
+   */
+  public static Behavior<Request> create(String groupId) {
+    return Behaviors.setup(context -> new Group(context, groupId));
+  }
+
+  private final String groupId;
+  private final Map<String, ActorRef<Device.Request>> deviceToActor = new HashMap<>();
+
+  private Group(ActorContext<Request> context, String groupId) {
+    super(context);
+    this.groupId = groupId;
+    context.getLog().info("Group actor {} ({}) created", groupId, System.identityHashCode(this));
+  }
+
+  @Override
+  public Receive<Request> createReceive() {
+    return newReceiveBuilder()
+        .onMessage(RegisterDevice.class, this::onRegisterDevice)
+        .onMessage(RequestDeviceList.class, this::onRequestDeviceList)
+        .onMessage(DeviceTerminated.class, this::onDeviceTerminated)
+        .onSignal(PostStop.class, this::onPostStop)
+        .build();
+  }
+
+  private Behavior<Request> onRegisterDevice(RegisterDevice request) {
+    if (!groupId.equals(request.getGroupId())) {
+      getContext().getLog().warn(
+          "Group actor {} ({}): RegisterDevice request for device {}-{} ignored",
+          groupId,
+          System.identityHashCode(this),
+          request.getDeviceId(),
+          request.getGroupId());
+      return this;
+    }
+
+    ActorRef<Device.Request> device = deviceToActor.computeIfAbsent(
+        request.getDeviceId(), this::createDevice);
+
+    request.getReplyTo().tell(DeviceRegistered.builder().device(device).build());
+    return this;
+  }
+
+  private ActorRef<Device.Request> createDevice(String deviceId) {
+    ActorRef<Device.Request> device = getContext().spawn(
+        Device.create(groupId, deviceId), "device-" + deviceId);
+    getContext().watchWith(
+        device,
+        DeviceTerminated.builder()
+            .groupId(groupId)
+            .deviceId(deviceId)
+            .build());
+    return device;
+  }
+
+  private Behavior<Request> onRequestDeviceList(RequestDeviceList request) {
+    request.getReplyTo().tell(DeviceListReply.builder()
+        .requestId(request.getRequestId())
+        .deviceIds(deviceToActor.keySet())
+        .build());
+    return this;
+  }
+
+  private Behavior<Request> onDeviceTerminated(DeviceTerminated request) {
+    getContext().getLog().info(
+        "Group actor {} ({}): Device {}-{} terminated",
+        groupId,
+        System.identityHashCode(this),
+        request.getDeviceId(),
+        request.getGroupId());
+    deviceToActor.remove(request.getDeviceId());
+    return this;
+  }
+
+  private Behavior<Request> onPostStop(PostStop signal) {
+    getContext().getLog().info(
+        "Group actor {} ({}) stopped",
+        groupId,
+        System.identityHashCode(this));
+    return this;
+  }
+}
