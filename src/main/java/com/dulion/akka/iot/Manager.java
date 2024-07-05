@@ -16,21 +16,21 @@ public class Manager extends AbstractBehavior<Manager.Request> {
 
   @Value
   @Builder
-  public static class RegisterDevice implements Manager.Request, Group.Request {
+  public static class RegisterDeviceRequest implements Manager.Request, Group.Request {
     String groupId;
     String deviceId;
-    ActorRef<DeviceRegistered> replyTo;
+    ActorRef<RegisterDeviceReply> replyTo;
   }
 
   @Value
   @Builder
-  public static class DeviceRegistered {
+  public static class RegisterDeviceReply {
     ActorRef<Device.Request> device;
   }
 
   @Value
   @Builder
-  public static class RequestDeviceList implements Manager.Request, Group.Request {
+  public static class DeviceListRequest implements Manager.Request, Group.Request {
     long requestId;
     String groupId;
     ActorRef<DeviceListReply> replyTo;

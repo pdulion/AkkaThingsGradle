@@ -8,9 +8,9 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import com.dulion.akka.iot.Manager.DeviceListReply;
-import com.dulion.akka.iot.Manager.DeviceRegistered;
-import com.dulion.akka.iot.Manager.RegisterDevice;
-import com.dulion.akka.iot.Manager.RequestDeviceList;
+import com.dulion.akka.iot.Manager.RegisterDeviceReply;
+import com.dulion.akka.iot.Manager.RegisterDeviceRequest;
+import com.dulion.akka.iot.Manager.DeviceListRequest;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Builder;
@@ -52,14 +52,14 @@ public class Group extends AbstractBehavior<Group.Request> {
   @Override
   public Receive<Request> createReceive() {
     return newReceiveBuilder()
-        .onMessage(RegisterDevice.class, this::onRegisterDevice)
-        .onMessage(RequestDeviceList.class, this::onRequestDeviceList)
+        .onMessage(RegisterDeviceRequest.class, this::onRegisterDevice)
+        .onMessage(DeviceListRequest.class, this::onDeviceList)
         .onMessage(DeviceTerminated.class, this::onDeviceTerminated)
         .onSignal(PostStop.class, this::onPostStop)
         .build();
   }
 
-  private Behavior<Request> onRegisterDevice(RegisterDevice request) {
+  private Behavior<Request> onRegisterDevice(RegisterDeviceRequest request) {
     if (!groupId.equals(request.getGroupId())) {
       getContext().getLog().warn(
           "Group actor {} ({}): RegisterDevice request for device {}-{} ignored",
@@ -73,7 +73,7 @@ public class Group extends AbstractBehavior<Group.Request> {
     ActorRef<Device.Request> device = deviceToActor.computeIfAbsent(
         request.getDeviceId(), this::createDevice);
 
-    request.getReplyTo().tell(DeviceRegistered.builder().device(device).build());
+    request.getReplyTo().tell(RegisterDeviceReply.builder().device(device).build());
     return this;
   }
 
@@ -89,7 +89,7 @@ public class Group extends AbstractBehavior<Group.Request> {
     return device;
   }
 
-  private Behavior<Request> onRequestDeviceList(RequestDeviceList request) {
+  private Behavior<Request> onDeviceList(DeviceListRequest request) {
     request.getReplyTo().tell(DeviceListReply.builder()
         .requestId(request.getRequestId())
         .deviceIds(deviceToActor.keySet())

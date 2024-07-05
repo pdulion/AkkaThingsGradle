@@ -19,7 +19,7 @@ public class Device extends AbstractBehavior<Request> {
 
   @Value
   @Builder
-  public static class RequestTemperature implements Request {
+  public static class ReadTemperatureRequest implements Request {
 
     long requestId;
     ActorRef<TemperatureReply> replyTo;
@@ -35,16 +35,16 @@ public class Device extends AbstractBehavior<Request> {
 
   @Value
   @Builder
-  public static class RecordTemperature implements Request {
+  public static class RecordTemperatureRequest implements Request {
 
     long requestId;
     double temperature;
-    ActorRef<TemperatureRecorded> replyTo;
+    ActorRef<RecordTemperatureReply> replyTo;
   }
 
   @Value
   @Builder
-  public static class TemperatureRecorded {
+  public static class RecordTemperatureReply {
 
     long requestId;
   }
@@ -78,14 +78,14 @@ public class Device extends AbstractBehavior<Request> {
   @Override
   public Receive<Request> createReceive() {
     return newReceiveBuilder()
-        .onMessage(RecordTemperature.class, this::onRecordTemperature)
-        .onMessage(RequestTemperature.class, this::onReadTemperature)
+        .onMessage(RecordTemperatureRequest.class, this::onRecordTemperature)
+        .onMessage(ReadTemperatureRequest.class, this::onReadTemperature)
         .onMessage(Passivate.class, signal -> Behaviors.stopped())
         .onSignal(PostStop.class, this::onPostStop)
         .build();
   }
 
-  private Behavior<Request> onRecordTemperature(RecordTemperature request) {
+  private Behavior<Request> onRecordTemperature(RecordTemperatureRequest request) {
     getContext().getLog().info(
         "Recording Temperature requestId: {}, temperatures {}, actor: {}-{} ({})",
         request.getRequestId(),
@@ -95,13 +95,13 @@ public class Device extends AbstractBehavior<Request> {
         System.identityHashCode(this));
     temperature = request.getTemperature();
     request.replyTo.tell(
-        TemperatureRecorded.builder()
+        RecordTemperatureReply.builder()
             .requestId(request.getRequestId())
             .build());
     return this;
   }
 
-  private Behavior<Request> onReadTemperature(RequestTemperature request) {
+  private Behavior<Request> onReadTemperature(ReadTemperatureRequest request) {
     getContext().getLog().info(
         "Temperature requested requestId: {}, temperatures {}, actor: {}-{} ({})",
         request.getRequestId(),
