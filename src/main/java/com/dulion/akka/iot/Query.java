@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.Value;
 
-public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
+public class Query extends AbstractBehavior<Query.Request> {
 
   public interface Request {}
 
@@ -57,7 +57,7 @@ public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
       Duration timeout) {
     return Behaviors.setup(
         context -> Behaviors.withTimers(
-            timers -> new GroupQuery(
+            timers -> new Query(
                 requestId,
                 replyTo,
                 deviceIdToActor,
@@ -71,7 +71,7 @@ public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
   private final HashSet<String> waiting;
   private final Map<String, Manager.TemperatureReading> replies = new HashMap<>();
 
-  private GroupQuery(
+  private Query(
       long requestId,
       ActorRef<AllTemperaturesReply> replyTo,
       Map<String, ActorRef<Device.Request>> deviceIdToActor,

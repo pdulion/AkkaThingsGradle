@@ -3,7 +3,7 @@ package com.dulion.akka.iot;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.typed.ActorRef;
 import com.dulion.akka.iot.Device.Request;
-import com.dulion.akka.iot.GroupQuery.TemperatureReplyWrapper;
+import com.dulion.akka.iot.Query.TemperatureReplyWrapper;
 import com.dulion.akka.iot.Manager.AllTemperaturesReply;
 import com.dulion.akka.iot.Manager.DeviceTimedOut;
 import com.dulion.akka.iot.Manager.Temperature;
@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-public class GroupQueryTest {
+public class QueryTest {
 
   @ClassRule
   public static final TestKitJunitResource testKit = new TestKitJunitResource();
@@ -31,7 +31,7 @@ public class GroupQueryTest {
         .put("device2", device2.ref())
         .put("device3", device3.ref())
         .build();
-    var query = testKit.spawn(GroupQuery.create(
+    var query = testKit.spawn(Query.create(
         requester.getRef(),
         1L,
         deviceToActor,
@@ -66,7 +66,7 @@ public class GroupQueryTest {
         .put("device2", device2.ref())
         .put("device3", device3.ref())
         .build();
-    var query = testKit.spawn(GroupQuery.create(
+    var query = testKit.spawn(Query.create(
         requester.getRef(),
         1L,
         deviceToActor,
@@ -101,7 +101,7 @@ public class GroupQueryTest {
         .put("device2", device2.ref())
         .put("device3", device3.ref())
         .build();
-    var query = testKit.spawn(GroupQuery.create(
+    var query = testKit.spawn(Query.create(
         requester.getRef(),
         1L,
         deviceToActor,
@@ -138,7 +138,7 @@ public class GroupQueryTest {
         .put("device2", device2.ref())
         .put("device3", device3.ref())
         .build();
-    var query = testKit.spawn(GroupQuery.create(
+    var query = testKit.spawn(Query.create(
         requester.getRef(),
         1L,
         deviceToActor,

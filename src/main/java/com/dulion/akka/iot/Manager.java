@@ -48,7 +48,7 @@ public class Manager extends AbstractBehavior<Manager.Request> {
   }
 
   @Value(staticConstructor = "of")
-  public static class AllTemperaturesRequest implements GroupQuery.Request, Group.Request, Request {
+  public static class AllTemperaturesRequest implements Query.Request, Group.Request, Request {
     long requestId;
     String groupId;
     ActorRef<AllTemperaturesReply> replyTo;
