@@ -8,7 +8,7 @@ import com.dulion.akka.iot.Device.RecordTemperatureRequest;
 import com.dulion.akka.iot.Device.Request;
 import com.dulion.akka.iot.Device.ReadTemperatureRequest;
 import com.dulion.akka.iot.Device.RecordTemperatureReply;
-import com.dulion.akka.iot.Device.TemperatureReply;
+import com.dulion.akka.iot.Device.ReadTemperatureReply;
 import com.dulion.akka.iot.Manager.DeviceListReply;
 import com.dulion.akka.iot.Manager.RegisterDeviceReply;
 import com.dulion.akka.iot.Manager.RegisterDeviceRequest;
@@ -26,10 +26,10 @@ public class DeviceTest {
 
   @Test
   public void testReplyWithEmptyReadingIfNoTemperatureIsKnown() {
-    TestProbe<TemperatureReply> readProbe = testKit.createTestProbe(TemperatureReply.class);
+    TestProbe<ReadTemperatureReply> readProbe = testKit.createTestProbe(ReadTemperatureReply.class);
     ActorRef<Request> deviceActor = testKit.spawn(Device.create("group", "device"));
     deviceActor.tell(ReadTemperatureRequest.builder().requestId(42L).replyTo(readProbe.getRef()).build());
-    TemperatureReply reply = readProbe.receiveMessage();
+    ReadTemperatureReply reply = readProbe.receiveMessage();
     assertEquals(42L, reply.getRequestId());
     assertNull(reply.getTemperature());
   }
@@ -37,7 +37,7 @@ public class DeviceTest {
   @Test
   public void testReplyWithLatestTemperatureReading() {
     TestProbe<RecordTemperatureReply> recordProbe = testKit.createTestProbe(RecordTemperatureReply.class);
-    TestProbe<TemperatureReply> readProbe = testKit.createTestProbe(TemperatureReply.class);
+    TestProbe<ReadTemperatureReply> readProbe = testKit.createTestProbe(ReadTemperatureReply.class);
     ActorRef<Request> deviceActor = testKit.spawn(Device.create("group", "device"));
 
     deviceActor.tell(
@@ -53,7 +53,7 @@ public class DeviceTest {
             .requestId(2L)
             .replyTo(readProbe.getRef())
             .build());
-    TemperatureReply temperature = readProbe.receiveMessage();
+    ReadTemperatureReply temperature = readProbe.receiveMessage();
     assertEquals(2L, temperature.getRequestId());
     assertEquals(24.0, temperature.getTemperature());
   }
@@ -78,7 +78,7 @@ public class DeviceTest {
     RegisterDeviceReply registered2 = registeredProbe.receiveMessage();
     assertNotEquals(registered1.getDevice(), registered2.getDevice());
 
-    TestProbe<TemperatureReply> readProbe = testKit.createTestProbe(TemperatureReply.class);
+    TestProbe<ReadTemperatureReply> readProbe = testKit.createTestProbe(ReadTemperatureReply.class);
     registered1.getDevice().tell(ReadTemperatureRequest.builder()
         .requestId(1L)
         .replyTo(readProbe.getRef())

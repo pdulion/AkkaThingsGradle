@@ -13,30 +13,26 @@ import lombok.Value;
 
 public class Device extends AbstractBehavior<Request> {
 
-  public interface Request {
-
-  }
+  public interface Request {}
 
   @Value
   @Builder
   public static class ReadTemperatureRequest implements Request {
-
     long requestId;
-    ActorRef<TemperatureReply> replyTo;
+    ActorRef<ReadTemperatureReply> replyTo;
   }
 
   @Value
   @Builder
-  public static class TemperatureReply {
-
+  public static class ReadTemperatureReply {
     long requestId;
+    String deviceId;
     Double temperature;
   }
 
   @Value
   @Builder
   public static class RecordTemperatureRequest implements Request {
-
     long requestId;
     double temperature;
     ActorRef<RecordTemperatureReply> replyTo;
@@ -45,7 +41,6 @@ public class Device extends AbstractBehavior<Request> {
   @Value
   @Builder
   public static class RecordTemperatureReply {
-
     long requestId;
   }
 
@@ -110,8 +105,9 @@ public class Device extends AbstractBehavior<Request> {
         deviceId,
         System.identityHashCode(this));
     request.getReplyTo().tell(
-        TemperatureReply.builder()
+        ReadTemperatureReply.builder()
             .requestId(request.getRequestId())
+            .deviceId(deviceId)
             .temperature(temperature)
             .build());
     return this;

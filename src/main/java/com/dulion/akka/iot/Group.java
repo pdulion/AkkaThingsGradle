@@ -18,20 +18,17 @@ import lombok.Value;
 
 public class Group extends AbstractBehavior<Group.Request> {
 
-  public interface Request {
-
-  }
+  public interface Request {}
 
   @Value
   @Builder
   private static class DeviceTerminated implements Request {
-
     String groupId;
     String deviceId;
   }
 
   /**
-   * Create behavior for temperature device manager.
+   * Create behavior for device group.
    *
    * @param groupId - Identifies group to which devices will belong.
    * @return Behavior - reference to group supplier.
@@ -78,8 +75,7 @@ public class Group extends AbstractBehavior<Group.Request> {
   }
 
   private ActorRef<Device.Request> createDevice(String deviceId) {
-    ActorRef<Device.Request> device = getContext().spawn(
-        Device.create(groupId, deviceId), "device-" + deviceId);
+    ActorRef<Device.Request> device = getContext().spawn(Device.create(groupId, deviceId), "device-" + deviceId);
     getContext().watchWith(
         device,
         DeviceTerminated.builder()
