@@ -25,6 +25,7 @@ dependencies {
   implementation "com.typesafe.akka:akka-actor-typed_${versions.ScalaBinary}"
   implementation "com.fasterxml.jackson.core:jackson-databind:2.17.1"
   implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1"
+  implementation "com.google.guava:guava:33.2.1-jre"
   runtimeOnly "org.apache.logging.log4j:log4j-slf4j-impl:2.23.1"
 
   testImplementation "com.typesafe.akka:akka-actor-testkit-typed_${versions.ScalaBinary}"

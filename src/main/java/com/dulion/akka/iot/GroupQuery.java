@@ -12,6 +12,7 @@ import com.dulion.akka.iot.Manager.AllTemperaturesReply;
 import com.dulion.akka.iot.Manager.DeviceTimedOut;
 import com.dulion.akka.iot.Manager.Temperature;
 import com.dulion.akka.iot.Manager.TemperatureNotAvailable;
+import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,7 +29,8 @@ public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
   }
 
   @Value
-  private static class TemperatureReplyWrapper implements Request {
+  @VisibleForTesting
+  static class TemperatureReplyWrapper implements Request {
     ReadTemperatureReply reply;
   }
 
@@ -47,8 +49,8 @@ public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
    * @return Behavior - reference to group query supplier.
    */
   public static Behavior<Request> create(
-      long requestId,
       ActorRef<Manager.AllTemperaturesReply> replyTo,
+      long requestId,
       Map<String, ActorRef<Device.Request>> deviceIdToActor,
       Duration timeout) {
     return Behaviors.setup(

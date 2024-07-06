@@ -72,7 +72,7 @@ public class Manager extends AbstractBehavior<Manager.Request> {
 
   @Value
   @Builder
-  public class Temperature implements TemperatureReading {
+  public static class Temperature implements TemperatureReading {
     double value;
   }
 
