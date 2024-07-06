@@ -7,10 +7,13 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
+import com.dulion.akka.iot.Manager.AllTemperaturesRequest;
 import com.dulion.akka.iot.Manager.DeviceListReply;
 import com.dulion.akka.iot.Manager.DeviceListRequest;
 import com.dulion.akka.iot.Manager.RegisterDeviceReply;
 import com.dulion.akka.iot.Manager.RegisterDeviceRequest;
+import com.google.common.collect.ImmutableMap;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Value;
@@ -50,8 +53,21 @@ public class Group extends AbstractBehavior<Group.Request> {
         .onMessage(RegisterDeviceRequest.class, this::onRegisterDevice)
         .onMessage(DeviceListRequest.class, this::onDeviceList)
         .onMessage(DeviceTerminated.class, this::onDeviceTerminated)
+        .onMessage(
+            AllTemperaturesRequest.class,
+            request -> groupId.equals(request.getGroupId()),
+            this::OnAllTemperatures)
         .onSignal(PostStop.class, this::onPostStop)
         .build();
+  }
+
+  private Behavior<Request> OnAllTemperatures(AllTemperaturesRequest request) {
+    getContext().spawnAnonymous(Query.create(
+        request.getReplyTo(),
+        request.getRequestId(),
+        ImmutableMap.copyOf(deviceToActor),
+        Duration.ofSeconds(3)));
+    return this;
   }
 
   private Behavior<Request> onRegisterDevice(RegisterDeviceRequest request) {

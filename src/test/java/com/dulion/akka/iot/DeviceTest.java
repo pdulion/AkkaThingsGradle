@@ -4,20 +4,28 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import com.dulion.akka.iot.Device.Passivate;
-import com.dulion.akka.iot.Device.RecordTemperatureRequest;
-import com.dulion.akka.iot.Device.Request;
+import com.dulion.akka.iot.Device.ReadTemperatureReply;
 import com.dulion.akka.iot.Device.ReadTemperatureRequest;
 import com.dulion.akka.iot.Device.RecordTemperatureReply;
-import com.dulion.akka.iot.Device.ReadTemperatureReply;
+import com.dulion.akka.iot.Device.RecordTemperatureRequest;
+import com.dulion.akka.iot.Device.Request;
+import com.dulion.akka.iot.Manager.AllTemperaturesReply;
+import com.dulion.akka.iot.Manager.AllTemperaturesRequest;
 import com.dulion.akka.iot.Manager.DeviceListReply;
+import com.dulion.akka.iot.Manager.DeviceListRequest;
 import com.dulion.akka.iot.Manager.RegisterDeviceReply;
 import com.dulion.akka.iot.Manager.RegisterDeviceRequest;
-import com.dulion.akka.iot.Manager.DeviceListRequest;
+import com.dulion.akka.iot.Manager.Temperature;
+import com.dulion.akka.iot.Manager.TemperatureNotAvailable;
+import com.dulion.akka.iot.Manager.TemperatureReading;
+import com.google.common.collect.ImmutableMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import static org.junit.Assert.assertEquals;
 import org.junit.ClassRule;
 import org.junit.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class DeviceTest {
 
@@ -46,7 +54,7 @@ public class DeviceTest {
     deviceActor.tell(ReadTemperatureRequest.of(2L, readProbe.getRef()));
     ReadTemperatureReply temperature = readProbe.receiveMessage();
     assertEquals(2L, temperature.getRequestId());
-    assertEquals(24.0, temperature.getTemperature());
+    assertEquals(24.0, temperature.getTemperature(), 0.0);
   }
 
   @Test
@@ -147,5 +155,42 @@ public class DeviceTest {
               deviceList2.getDeviceIds());
           return null;
         });
+  }
+
+  @Test
+  public void testColletTemperaturesFromAllActiveDevices() {
+    var groupActor = testKit.spawn(Group.create("group"));
+
+    // Add devices to group
+    var registeredProbe = testKit.createTestProbe(RegisterDeviceReply.class);
+
+    groupActor.tell(RegisterDeviceRequest.of("group", "device1", registeredProbe.getRef()));
+    var device1 = registeredProbe.receiveMessage();
+    groupActor.tell(RegisterDeviceRequest.of("group","device2", registeredProbe.getRef()));
+    var device2 = registeredProbe.receiveMessage();
+    groupActor.tell(RegisterDeviceRequest.of("group","device3", registeredProbe.getRef()));
+    var device3 = registeredProbe.receiveMessage();
+
+    // Add temperature to devices
+    var recordProbe = testKit.createTestProbe(Device.RecordTemperatureReply.class);
+
+    device1.getDevice().tell(Device.RecordTemperatureRequest.of(1L, 1.0, recordProbe.getRef()));
+    assertEquals(1L, recordProbe.receiveMessage().getRequestId());
+    device2.getDevice().tell(Device.RecordTemperatureRequest.of(2L, 2.0, recordProbe.getRef()));
+    assertEquals(2L, recordProbe.receiveMessage().getRequestId());
+    // No temperature for device 3
+
+    var temperatureReply = testKit.createTestProbe(AllTemperaturesReply.class);
+    groupActor.tell(AllTemperaturesRequest.of(3L, "group", temperatureReply.getRef()));
+
+    var expected = ImmutableMap.<String, TemperatureReading>builder()
+        .put("device1", Temperature.of(1.0))
+        .put("device2", Temperature.of(2.0))
+        .put("device3", TemperatureNotAvailable.READING_NOT_AVAILABLE)
+        .build();
+
+    var reply = temperatureReply.receiveMessage();
+    assertEquals(3L, reply.getRequestId());
+    assertEquals(expected, reply.getTemperatures());
   }
 }
