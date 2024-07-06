@@ -8,20 +8,18 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import com.dulion.akka.iot.Manager.DeviceListReply;
+import com.dulion.akka.iot.Manager.DeviceListRequest;
 import com.dulion.akka.iot.Manager.RegisterDeviceReply;
 import com.dulion.akka.iot.Manager.RegisterDeviceRequest;
-import com.dulion.akka.iot.Manager.DeviceListRequest;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.Builder;
 import lombok.Value;
 
 public class Group extends AbstractBehavior<Group.Request> {
 
   public interface Request {}
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   private static class DeviceTerminated implements Request {
     String groupId;
     String deviceId;
@@ -70,7 +68,7 @@ public class Group extends AbstractBehavior<Group.Request> {
     ActorRef<Device.Request> device = deviceToActor.computeIfAbsent(
         request.getDeviceId(), this::createDevice);
 
-    request.getReplyTo().tell(RegisterDeviceReply.builder().device(device).build());
+    request.getReplyTo().tell(RegisterDeviceReply.of(device));
     return this;
   }
 
@@ -78,18 +76,12 @@ public class Group extends AbstractBehavior<Group.Request> {
     ActorRef<Device.Request> device = getContext().spawn(Device.create(groupId, deviceId), "device-" + deviceId);
     getContext().watchWith(
         device,
-        DeviceTerminated.builder()
-            .groupId(groupId)
-            .deviceId(deviceId)
-            .build());
+        DeviceTerminated.of(groupId, deviceId));
     return device;
   }
 
   private Behavior<Request> onDeviceList(DeviceListRequest request) {
-    request.getReplyTo().tell(DeviceListReply.builder()
-        .requestId(request.getRequestId())
-        .deviceIds(deviceToActor.keySet())
-        .build());
+    request.getReplyTo().tell(DeviceListReply.of(request.getRequestId(), deviceToActor.keySet()));
     return this;
   }
 

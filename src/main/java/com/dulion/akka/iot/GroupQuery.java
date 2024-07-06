@@ -9,6 +9,7 @@ import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.javadsl.TimerScheduler;
 import com.dulion.akka.iot.Device.ReadTemperatureReply;
 import com.dulion.akka.iot.Manager.AllTemperaturesReply;
+import com.dulion.akka.iot.Manager.DeviceNotAvailable;
 import com.dulion.akka.iot.Manager.DeviceTimedOut;
 import com.dulion.akka.iot.Manager.Temperature;
 import com.dulion.akka.iot.Manager.TemperatureNotAvailable;
@@ -89,10 +90,7 @@ public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
 
     deviceIdToActor.forEach((key, value) -> {
       context.watchWith(value, new DeviceTerminated(key));
-      value.tell(Device.ReadTemperatureRequest.builder()
-          .requestId(requestId)
-          .replyTo(adapter)
-          .build());
+      value.tell(Device.ReadTemperatureRequest.of(requestId, adapter));
     });
   }
 
@@ -108,8 +106,8 @@ public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
   private Behavior<Request> onTemperatureReply(TemperatureReplyWrapper wrapper) {
     ReadTemperatureReply reply = wrapper.getReply();
     Manager.TemperatureReading reading = Optional.ofNullable(reply.getTemperature())
-        .map(t -> ((Manager.TemperatureReading) Temperature.builder().value(t).build()))
-        .orElse(TemperatureNotAvailable.INSTANCE);
+        .map(t -> (Manager.TemperatureReading) Temperature.of(t))
+        .orElse(TemperatureNotAvailable.READING_NOT_AVAILABLE);
     replies.put(reply.getDeviceId(), reading);
     waiting.remove(reply.getDeviceId());
     return respondWhenCollected();
@@ -118,13 +116,13 @@ public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
   private Behavior<Request> onDeviceTerminated(DeviceTerminated terminated) {
     String deviceId = terminated.getDeviceId();
     if (waiting.remove(deviceId)) {
-      replies.put(deviceId, DeviceTimedOut.INSTANCE);
+      replies.put(deviceId, DeviceNotAvailable.DEVICE_NOT_AVAILABLE);
     }
     return respondWhenCollected();
   }
 
   private Behavior<Request> onCollectionTimeout(CollectionTimeout timeout) {
-    waiting.forEach(deviceId -> replies.put(deviceId, DeviceTimedOut.INSTANCE));
+    waiting.forEach(deviceId -> replies.put(deviceId, DeviceTimedOut.DEVICE_TIMED_OUT));
     waiting.clear();
     return respondWhenCollected();
   }
@@ -133,10 +131,7 @@ public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
     if (!waiting.isEmpty()) {
       return this;
     }
-    replyTo.tell(Manager.AllTemperaturesReply.builder()
-        .requestId(requestId)
-        .temperatures(replies)
-        .build());
+    replyTo.tell(Manager.AllTemperaturesReply.of(requestId, replies));
     return Behaviors.stopped();
   }
 }

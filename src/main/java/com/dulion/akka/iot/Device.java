@@ -8,38 +8,33 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import com.dulion.akka.iot.Device.Request;
-import lombok.Builder;
 import lombok.Value;
 
 public class Device extends AbstractBehavior<Request> {
 
   public interface Request {}
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   public static class ReadTemperatureRequest implements Request {
     long requestId;
     ActorRef<ReadTemperatureReply> replyTo;
   }
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   public static class ReadTemperatureReply {
     long requestId;
     String deviceId;
     Double temperature;
   }
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   public static class RecordTemperatureRequest implements Request {
     long requestId;
     double temperature;
     ActorRef<RecordTemperatureReply> replyTo;
   }
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   public static class RecordTemperatureReply {
     long requestId;
   }
@@ -89,10 +84,7 @@ public class Device extends AbstractBehavior<Request> {
         deviceId,
         System.identityHashCode(this));
     temperature = request.getTemperature();
-    request.replyTo.tell(
-        RecordTemperatureReply.builder()
-            .requestId(request.getRequestId())
-            .build());
+    request.replyTo.tell(RecordTemperatureReply.of(request.getRequestId()));
     return this;
   }
 
@@ -104,12 +96,8 @@ public class Device extends AbstractBehavior<Request> {
         groupId,
         deviceId,
         System.identityHashCode(this));
-    request.getReplyTo().tell(
-        ReadTemperatureReply.builder()
-            .requestId(request.getRequestId())
-            .deviceId(deviceId)
-            .temperature(temperature)
-            .build());
+    request.getReplyTo()
+        .tell(ReadTemperatureReply.of(request.getRequestId(), deviceId, temperature));
     return this;
   }
 

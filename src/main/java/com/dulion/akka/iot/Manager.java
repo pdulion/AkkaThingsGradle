@@ -11,58 +11,50 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import lombok.Builder;
 import lombok.Value;
 
 public class Manager extends AbstractBehavior<Manager.Request> {
 
   public interface Request {}
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   public static class RegisterDeviceRequest implements Manager.Request, Group.Request {
     String groupId;
     String deviceId;
     ActorRef<RegisterDeviceReply> replyTo;
   }
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   public static class RegisterDeviceReply {
     ActorRef<Device.Request> device;
   }
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   public static class DeviceListRequest implements Manager.Request, Group.Request {
     long requestId;
     String groupId;
     ActorRef<DeviceListReply> replyTo;
   }
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   public static class DeviceListReply {
     long requestId;
     Set<String> deviceIds;
   }
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   private static class GroupTerminated implements Request {
     String groupId;
   }
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   public static class AllTemperaturesRequest implements GroupQuery.Request, Group.Request, Request {
     long requestId;
     String groupId;
     ActorRef<AllTemperaturesReply> replyTo;
   }
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   public static class AllTemperaturesReply {
     long requestId;
     Map<String, TemperatureReading> temperatures;
@@ -70,22 +62,21 @@ public class Manager extends AbstractBehavior<Manager.Request> {
 
   public interface TemperatureReading {}
 
-  @Value
-  @Builder
+  @Value(staticConstructor = "of")
   public static class Temperature implements TemperatureReading {
     double value;
   }
 
   public enum TemperatureNotAvailable implements TemperatureReading {
-    INSTANCE
+    READING_NOT_AVAILABLE
   }
 
   public enum DeviceNotAvailable implements TemperatureReading {
-    INSTANCE
+    DEVICE_NOT_AVAILABLE
   }
 
   public enum DeviceTimedOut implements TemperatureReading {
-    INSTANCE
+    DEVICE_TIMED_OUT
   }
 
   /**
@@ -121,7 +112,7 @@ public class Manager extends AbstractBehavior<Manager.Request> {
 
   private ActorRef<Group.Request> createGroup(String groupId) {
     ActorRef<Group.Request> group = getContext().spawn(Group.create(groupId), "group-" + groupId);
-    getContext().watchWith(group, GroupTerminated.builder().groupId(groupId).build());
+    getContext().watchWith(group, GroupTerminated.of(groupId));
     return group;
   }
 
@@ -130,10 +121,7 @@ public class Manager extends AbstractBehavior<Manager.Request> {
     if (group != null) {
       group.tell(request);
     } else {
-      request.getReplyTo().tell(DeviceListReply.builder()
-          .requestId(request.getRequestId())
-          .deviceIds(Collections.emptySet())
-          .build());
+      request.getReplyTo().tell(DeviceListReply.of(request.getRequestId(), Collections.emptySet()));
     }
     return this;
   }
