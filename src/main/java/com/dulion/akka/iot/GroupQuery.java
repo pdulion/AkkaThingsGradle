@@ -24,19 +24,20 @@ public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
 
   public interface Request {}
 
-  private enum CollectionTimeout implements Request {
-    INSTANCE
-  }
-
-  @Value
   @VisibleForTesting
+  @Value(staticConstructor = "of")
   static class TemperatureReplyWrapper implements Request {
     ReadTemperatureReply reply;
   }
 
-  @Value
-  private static class DeviceTerminated implements Request {
+  @VisibleForTesting
+  @Value(staticConstructor = "of")
+  static class DeviceTerminated implements Request {
     String deviceId;
+  }
+
+  private enum CollectionTimeout implements Request {
+    INSTANCE
   }
 
   /**
@@ -79,21 +80,20 @@ public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
     super(context);
     this.requestId = requestId;
     this.replyTo = replyTo;
+    this.waiting = new HashSet<>(deviceIdToActor.keySet());
 
     timers.startSingleTimer(CollectionTimeout.INSTANCE, timeout);
-
     ActorRef<ReadTemperatureReply> adapter = context.messageAdapter(
         ReadTemperatureReply.class,
-        TemperatureReplyWrapper::new);
+        TemperatureReplyWrapper::of);
 
-    deviceIdToActor.entrySet().forEach(entry -> {
-      context.watchWith(entry.getValue(), new DeviceTerminated(entry.getKey()));
-      entry.getValue().tell(Device.ReadTemperatureRequest.builder()
+    deviceIdToActor.forEach((key, value) -> {
+      context.watchWith(value, new DeviceTerminated(key));
+      value.tell(Device.ReadTemperatureRequest.builder()
           .requestId(requestId)
           .replyTo(adapter)
           .build());
     });
-    waiting = new HashSet<>(deviceIdToActor.keySet());
   }
 
   @Override
@@ -133,7 +133,6 @@ public class GroupQuery extends AbstractBehavior<GroupQuery.Request> {
     if (!waiting.isEmpty()) {
       return this;
     }
-
     replyTo.tell(Manager.AllTemperaturesReply.builder()
         .requestId(requestId)
         .temperatures(replies)

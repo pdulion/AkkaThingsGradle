@@ -3,6 +3,7 @@ package com.dulion.akka.iot;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.typed.ActorRef;
 import com.dulion.akka.iot.Device.Request;
+import com.dulion.akka.iot.GroupQuery.TemperatureReplyWrapper;
 import com.dulion.akka.iot.Manager.AllTemperaturesReply;
 import com.dulion.akka.iot.Manager.Temperature;
 import com.dulion.akka.iot.Manager.TemperatureReading;
@@ -38,19 +39,19 @@ public class GroupQueryTest {
     device2.expectMessageClass(Device.ReadTemperatureRequest.class);
     device3.expectMessageClass(Device.ReadTemperatureRequest.class);
 
-    query.tell(new GroupQuery.TemperatureReplyWrapper(
+    query.tell(TemperatureReplyWrapper.of(
         Device.ReadTemperatureReply.builder()
             .requestId(1L)
             .deviceId("device1")
             .temperature(1.0)
             .build()));
-    query.tell(new GroupQuery.TemperatureReplyWrapper(
+    query.tell(TemperatureReplyWrapper.of(
         Device.ReadTemperatureReply.builder()
             .requestId(1L)
             .deviceId("device2")
             .temperature(2.0)
             .build()));
-    query.tell(new GroupQuery.TemperatureReplyWrapper(
+    query.tell(TemperatureReplyWrapper.of(
         Device.ReadTemperatureReply.builder()
             .requestId(1L)
             .deviceId("device3")
